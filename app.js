@@ -1,154 +1,139 @@
-class Calculator{
-  constructor(currentText,previousText){
-    this.currentText = currentText;
-    this.previousText = previousText;
-    this.clear();
-  }
-  clear(){
-    this.currentOperand = '';
-    this.previousOperand = '';
-    this.operation = undefined;
+/*Javascript calculator by https://github.com/bacayo */
 
-  }
-  delete(){
-
-  }
-  addNumber(number)
-   {
-    if(number === '.' && this.currentOperand.includes('.')) return;
-    this.currentOperand = this.currentOperand.toString() + number.toString();
-    
-   }
-   chooseOperation(operation)
-   {
-     if(this.currentOperand === '') return;
-     if(this.previousOperand !== '')
-     {
-       this.operate();
-     }
-    this.operation = operation;
-    this.previousOperand = this.currentOperand;
-    this.currentOperand = '';
-   }
-   operate()
-   {
-    let operation;
-    const prev = parseFloat(this.previousOperand);
-    const current = parseFloat(this.currentOperand); //27:44;
-   }
-   update()
-   {
-    this.currentText.innerHTML = this.currentOperand;
-    this.previousText.innerHTML = this.previousOperand;
-   }
-}
-
-
-
+// DOM  constant elements
 const numberButtons = document.querySelectorAll("[data-button]");
 const operatorButtons = document.querySelectorAll("[data-operator]");
-const equalButton = document.querySelector("[data-equal]");
+const equalsButton = document.querySelector("[data-equal]");
 const clearButton = document.querySelector("[data-clear]");
 const deleteButton = document.querySelector("[data-delete]");
-const previousText = document.querySelector("[data-previous]");
-const currentText = document.querySelector("[data-current]");
-
-//Adding newButtons 
-const plusButton = document.querySelector('#plus');
-const minusButton = document.querySelector('#minus');
-const divideButton = document.querySelector('#divide');
-const timesButton = document.querySelector('#times');
-
-let currentNumber = null;
-let previousNumber = null;
-let operator = null;
+const pointButton = document.querySelector("[data-point]");
+const screen = document.querySelector("[data-current]");
 
 
-const calculator = new Calculator(currentText,previousText);
+// Holding values
+let firstOperand = "";
+let secondOperand = "";
+let currentOperation = null;
+let shouldResetScreen = false;
 
-numberButtons.forEach(button=>{
-  button.addEventListener('click',()=>{
-    calculator.addNumber(button.innerHTML);
-    calculator.update();
-  })
-})
 
-operatorButtons.forEach(button=>{
-  button.addEventListener('click',()=>{
-    calculator.chooseOperation(button.innerHTML);
-    calculator.update();
-  })
-})
-equalButton.addEventListener('click',button=>{
-  calculator.operate();
-  calculator.update();
-})
+//button actions
+window.addEventListener("keydown", setInput);
+equalsButton.addEventListener("click", evaluate);
+clearButton.addEventListener("click", clear);
+deleteButton.addEventListener("click", deleteNumber);
+pointButton.addEventListener("click", appendPoint);
 
-// function add(num1, num2) {
-//   plusButton.addEventListener('click',(e)=>{
-//     currentText.innerHTML += plusButton.innerHTML.toString();
-//     operator = plusButton.id;
-//     return num1 + num2;
-//   })
-// }
+numberButtons.forEach((button) =>
+  button.addEventListener("click", () => appendNumber(button.textContent))
+);
 
-// function substract(num1, num2) {
-//   minusButton.addEventListener('click',()=>{
-//     currentText.innerHTML += minusButton.innerHTML.toString();
-//     operator = minusButton.id
-//     return num1 - num2;
-//   })
-// }
-// function multiply(num1, num2) {
-//   timesButton.addEventListener('click',()=>{
-//     currentText.innerHTML += timesButton.innerHTML.toString();
-//     operator = timesButton.id
-//     return num1*num2;
-//   })
-// }
-// function divide(num1, num2) {
-//   divideButton.addEventListener('click',(e)=>{
-//     currentText.innerHTML += divideButton.innerHTML.toString();
-//     operator = divideButton.id;
-//     return num1 / num2;
-//   })
-// }
-// function operate(num1, num2, operationSign)
-// {
-//   operationSign = operator;
-//   if(operationSign == plusButton.id)
-//   {
-//     add()
-//   }
-// }
+operatorButtons.forEach((button) =>
+  button.addEventListener("click", () => setOperation(button.id))
+);
 
-// function display() {
-//   numberButtons.forEach((button) => {
-//     button.addEventListener("click", () => {
-//       currentText.innerHTML += button.innerHTML.toString();
-//     });
-//   });
-// }
 
-// function clear() {
-//   clearButton.addEventListener("click", (e) => {
-//     currentText.innerHTML = "";
-//     previousText.innerHTML = "";
-//   });
-// }
-// function deleteNumber() {
-//   deleteButton.addEventListener("click", () => {
-//     let arrayed = currentText.innerHTML.split("");
-//     let popped = arrayed.pop();
-//     currentText.innerHTML = arrayed.join("");
-//   });
-// }
+// functions
+function appendNumber(number) {
+  if (screen.textContent === "0" || shouldResetScreen) resetScreen();
+  screen.textContent += number;
+}
 
-// display();
-// clear();
-// deleteNumber();
-// divide(1,2);
-// add(1,2);
-// multiply(1,2);
-// substract(1,2);
-// operate(currentNumber,previousNumber,operator);
+function resetScreen() {
+  screen.textContent = "";
+  shouldResetScreen = false;
+}
+
+function clear() {
+  screen.textContent = "0";
+  firstOperand = "";
+  secondOperand = "";
+  currentOperation = null;
+}
+
+function appendPoint() {
+  if (shouldResetScreen) resetScreen();
+  if (screen.textContent === "") screen.textContent = "0";
+  if (screen.textContent.includes(".")) return;
+  screen.textContent += ".";
+}
+
+function deleteNumber() {
+  screen.textContent = screen.textContent.toString().slice(0, -1);
+}
+
+function setOperation(operator) {
+  if (currentOperation !== null) evaluate();
+  firstOperand = screen.textContent;
+  currentOperation = operator;
+  shouldResetScreen = true;
+}
+
+function evaluate() {
+  if (currentOperation === null || shouldResetScreen) return;
+  if (currentOperation === "divide" && screen.textContent === "0") {
+    alert("You can't divide by 0!");
+    clear();
+    return;
+  }
+  secondOperand = screen.textContent;
+  screen.textContent = roundResult(
+    operate(currentOperation, firstOperand, secondOperand)
+  );
+  currentOperation = null;
+}
+
+function roundResult(number) {
+  return Math.round(number * 1000) / 1000;
+}
+
+function setInput(e) {
+  if (e.key >= 0 && e.key <= 9) appendNumber(e.key);
+  if (e.key === ".") appendPoint();
+  if (e.key === "=" || e.key === "Enter") evaluate();
+  if (e.key === "Backspace") deleteNumber();
+  if (e.key === "Escape") clear();
+  if (e.key === "+" || e.key === "-" || e.key === "*" || e.key === "/")
+    setOperation(convertOperator(e.key));
+}
+
+function convertOperator(keyboardOperator) {
+  if (keyboardOperator === "/") return "divide";
+  if (keyboardOperator === "*") return "times";
+  if (keyboardOperator === "-") return "minus";
+  if (keyboardOperator === "+") return "plus";
+}
+
+function add(a, b) {
+  return a + b;
+}
+
+function substract(a, b) {
+  return a - b;
+}
+
+function multiply(a, b) {
+  return a * b;
+}
+
+function divide(a, b) {
+  return a / b;
+}
+
+function operate(operator, a, b) {
+  a = Number(a);
+  b = Number(b);
+  switch (operator) {
+    case "plus":
+      return add(a, b);
+    case "minus":
+      return substract(a, b);
+    case "times":
+      return multiply(a, b);
+    case "divide":
+      if (b === 0) return null;
+      else return divide(a, b);
+    default:
+      return null;
+  }
+}
