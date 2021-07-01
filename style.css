@@ -50,10 +50,6 @@ body {
   word-break: break-all;
   grid-column: 1/-1;
 }
-output .previous {
-  color: rgba(255, 255, 255, 0.75);
-  font-size: 1.5rem;
-}
 .output .current {
   color: white;
   font-size: 2.5rem;
